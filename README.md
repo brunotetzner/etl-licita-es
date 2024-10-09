@@ -1,1 +1,0 @@
-# etl-licita-es
