@@ -1,7 +1,7 @@
 import axios from "axios";
-import { LicitacaoData } from "../../services/dtos/licitacao-data.dto";
+import { LicitacaoDataDto } from "../../dtos/licitacao-data.dto";
 
-export async function getPncpLicitacoes(): Promise<LicitacaoData[]> {
+export async function getPncpLicitacoes(): Promise<LicitacaoDataDto[]> {
   try {
     const response = await axios.get(
       "https://treina.pncp.gov.br/api/search/?q=&tipos_documento=pcaorgao&pagina=1&tam_pagina=1000&ordenacao=-data"
@@ -10,7 +10,7 @@ export async function getPncpLicitacoes(): Promise<LicitacaoData[]> {
     const dadosApi = response.data.items;
 
     let idIncremental = 0;
-    const dadosLicitacao: LicitacaoData[] = dadosApi.map((item: any) => {
+    const dadosLicitacao: LicitacaoDataDto[] = dadosApi.map((item: any) => {
       idIncremental++;
       return {
         id_orgao: item.orgao_id || idIncremental,

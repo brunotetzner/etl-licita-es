@@ -1,4 +1,4 @@
-export interface LicitacaoData {
+export class LicitacaoDataDto {
   id_orgao: number;
   cnpj_orgao: string;
   nome_orgao: string;

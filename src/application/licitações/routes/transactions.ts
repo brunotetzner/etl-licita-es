@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { getLicitacoesService } from "../services/get-licitações";
+import { getLicitacoesService } from "../services/get-licitações.service";
 
 export async function transactionRoutes(app: FastifyInstance) {
   app.get("/", async (request, reply) => {
