@@ -17,6 +17,7 @@ export async function getPncpLicitacoes(): Promise<LicitacaoDataDto[]> {
         cnpj_orgao: item.orgao_cnpj,
         nome_orgao: item.orgao_nome || "NÃO INFORMADO",
         esfera_id: item.esfera_id || idIncremental,
+        esfera_nome: item.esfera_nome || "NÃO INFORMADO",
         poder_id: item.poder_id || idIncremental,
         id_tempo_publicacao: idIncremental,
         data_completa: new Date(item.data_publicacao_pncp),
