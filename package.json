@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "test": "vitest",
+    "start": "node build/server.js",
     "knex": "node --loader tsx ./node_modules/.bin/knex",
     "build": "tsup src --out-dir build"
   },
