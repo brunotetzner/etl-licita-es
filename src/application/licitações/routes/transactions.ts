@@ -15,7 +15,7 @@ export async function transactionRoutes(app: FastifyInstance) {
 
       return reply.send(planilhaBuffer);
     } catch (error) {
-      reply.status(500).send({ error: "Erro ao gerar a planilha" });
+      throw error;
     }
   });
 }

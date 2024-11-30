@@ -1,5 +1,7 @@
 import axios from "axios";
 import { LicitacaoDataDto } from "../../dtos/licitacao-data.dto";
+import { limitNumberOfCaracters } from "../../../../common/utils/limit-number-of-caracters";
+import { limitTextLength } from "../../../../common/utils/limit-object-number-of-caracteres";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -8,7 +10,7 @@ function delay(ms: number) {
 export async function getPncpLicitacoes(): Promise<LicitacaoDataDto[]> {
   try {
     const response = await axios.get(
-      "https://treina.pncp.gov.br/api/search/?tipos_documento=edital&ordenacao=-data&pagina=1&tam_pagina=100&status=recebendo_proposta"
+      "https://treina.pncp.gov.br/api/search/?tipos_documento=edital&ordenacao=-data&pagina=1&tam_pagina=1000&status=recebendo_proposta"
     );
 
     let dadosApi = response.data.items;
@@ -29,9 +31,14 @@ export async function getPncpLicitacoes(): Promise<LicitacaoDataDto[]> {
           splitparamsLicitacaoData[1] + "/" + splitparamsLicitacaoData[2];
 
         try {
-          const licitacaoResponse = await axios.get(
-            `https://treina.pncp.gov.br/api/pncp/v1/orgaos/${cnpjOrgao}/compras${paramsLicitacaoData}`
-          );
+          const licitacaoResponse = await axios
+            .get(
+              `https://treina.pncp.gov.br/api/pncp/v1/orgaos/${cnpjOrgao}/compras${paramsLicitacaoData}`
+            )
+            .catch((error) => {
+              console.log("erro ao pegar detalhes da licitação", error);
+              throw error;
+            });
 
           const licitacaoData = licitacaoResponse.data;
 
@@ -40,16 +47,25 @@ export async function getPncpLicitacoes(): Promise<LicitacaoDataDto[]> {
               `https://treina.pncp.gov.br/api/pncp/v1/orgaos/${cnpjOrgao}/compras/${paramsLicitacaoItems}/itens?pagina=1&tamanhoPagina=50000`
             )
             .catch((error) => {
-              console.log("PAGINA NÃO EXISTE");
+              console.log(
+                "erro ao pegar detalhes dos itens da licitação",
+                error
+              );
               throw error;
             });
 
           const licitacoesItems = licitacaoItemsResponse.data;
           let licitacaoItemsStringList = "Itens da licitação:\n";
           licitacoesItems.forEach((item: any) => {
-            licitacaoItemsStringList += `numero do item: ${item.numeroItem}\ndescricao: ${item.descricao}\nquantidade: ${item.quantidade}\nvalor unitário: ${item.valorUnitarioEstimado}\nvalor total: ${item.valorTotal}\n\n`;
+            licitacaoItemsStringList += `numero do item: ${
+              item.numeroItem
+            }\ndescricao: ${limitNumberOfCaracters(
+              item.descricao
+            )}\nquantidade: ${item.quantidade}\nvalor unitário: ${
+              item.valorUnitarioEstimado
+            }\nvalor total: ${item.valorTotal}\n\n`;
           });
-          console.log(licitacoesItems, licitacaoItemsStringList);
+          console.log(licitacaoItemsStringList);
           const urlToPncpDetailsPage = `https://treina.pncp.gov.br/app/editais/${cnpjOrgao}${paramsLicitacaoData}`;
           dadosLicitacao.push({
             id_licitacao: item.id,
@@ -92,14 +108,14 @@ export async function getPncpLicitacoes(): Promise<LicitacaoDataDto[]> {
           });
         } catch (error) {
           console.error("Erro ao buscar detalhes da licitação:", error);
+          throw error;
         }
       }
 
       console.log("Aguardando 5 segundos...");
       await delay(5000);
     }
-
-    return dadosLicitacao;
+    return limitTextLength(dadosLicitacao) as LicitacaoDataDto[];
   } catch (error) {
     console.error("Erro ao gerar a planilha:", error);
     throw error;
