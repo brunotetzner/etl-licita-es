@@ -7,10 +7,15 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function getPncpLicitacoes(): Promise<LicitacaoDataDto[]> {
+export async function getPncpLicitacoes(data: {
+  number: string;
+}): Promise<LicitacaoDataDto[]> {
+  const { number } = data;
+  const numberPerPage = Number(number) || 1000;
+  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", numberPerPage);
   try {
     const response = await axios.get(
-      "https://treina.pncp.gov.br/api/search/?tipos_documento=edital&ordenacao=-data&pagina=1&tam_pagina=1000&status=recebendo_proposta"
+      `https://treina.pncp.gov.br/api/search/?tipos_documento=edital&ordenacao=-data&pagina=1&tam_pagina=${numberPerPage}&status=recebendo_proposta`
     );
 
     let dadosApi = response.data.items;
@@ -112,8 +117,8 @@ export async function getPncpLicitacoes(): Promise<LicitacaoDataDto[]> {
         }
       }
 
-      console.log("Aguardando 5 segundos...");
-      await delay(5000);
+      console.log("Aguardando 3 segundos...");
+      await delay(3000);
     }
     return limitTextLength(dadosLicitacao) as LicitacaoDataDto[];
   } catch (error) {
