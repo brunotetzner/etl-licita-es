@@ -15,12 +15,6 @@ export async function transactionRoutes(app: FastifyInstance) {
       try {
         const { number } = request.query;
 
-        if (!number) {
-          return reply
-            .status(400)
-            .send({ error: "Parâmetro 'number' é obrigatório." });
-        }
-
         const planilhaBuffer = await getLicitacoesService({ number });
 
         reply

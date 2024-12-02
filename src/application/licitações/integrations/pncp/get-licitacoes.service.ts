@@ -11,7 +11,7 @@ export async function getPncpLicitacoes(data: {
   number: string;
 }): Promise<LicitacaoDataDto[]> {
   const { number } = data;
-  const numberPerPage = Number(number) || 1000;
+  const numberPerPage = Number(number) || 1400;
   try {
     const response = await axios.get(
       `https://treina.pncp.gov.br/api/search/?tipos_documento=edital&ordenacao=-data&pagina=1&tam_pagina=${numberPerPage}&status=recebendo_proposta`
