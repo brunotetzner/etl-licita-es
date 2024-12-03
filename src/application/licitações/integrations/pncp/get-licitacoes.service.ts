@@ -1,17 +1,104 @@
 import axios from "axios";
+import { google } from "googleapis";
 import { LicitacaoDataDto } from "../../dtos/licitacao-data.dto";
 import { limitNumberOfCaracters } from "../../../../common/utils/limit-number-of-caracters";
 import { limitTextLength } from "../../../../common/utils/limit-object-number-of-caracteres";
+import * as dotenv from "dotenv";
 
+// Carregar variáveis de ambiente
+dotenv.config();
+
+// Função de delay para controlar a taxa de requisição
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function sendToGoogleSheets(data: LicitacaoDataDto[]): Promise<void> {
+  const { GOOGLE_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY } =
+    process.env;
+
+  if (
+    !GOOGLE_SHEET_ID ||
+    !GOOGLE_SERVICE_ACCOUNT_EMAIL ||
+    !GOOGLE_PRIVATE_KEY
+  ) {
+    throw new Error(
+      "Missing Google Sheets credentials in environment variables."
+    );
+  }
+
+  // Autenticando com a API do Google Sheets
+  const auth = new google.auth.JWT(
+    GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    undefined,
+    GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    ["https://www.googleapis.com/auth/spreadsheets"]
+  );
+
+  const sheets = google.sheets({ version: "v4", auth });
+
+  try {
+    const values = data.map((item) => [
+      item.id_licitacao,
+      item.titulo,
+      item.descricao,
+      item.url,
+      item.data_criacao.toISOString(),
+      item.numero_controle_pncp,
+      item.orgao_id,
+      item.orgao_cnpj,
+      item.orgao_nome,
+      item.unidade_id,
+      item.unidade_nome,
+      item.esfera_id,
+      item.esfera_nome,
+      item.poder_id,
+      item.poder_nome,
+      item.municipio_id,
+      item.municipio_nome,
+      item.uf,
+      item.modalidade_licitacao_id,
+      item.modalidade_licitacao_nome,
+      item.situacao_id,
+      item.situacao_nome,
+      item.id_tempo,
+      item.data_publicacao.toISOString(),
+      item.ano,
+      item.mes,
+      item.cancelado,
+      item.trimestre,
+      item.valor_global,
+      item.id_tipocontrato,
+      item.tipocontrato,
+      item.licitacao_items,
+    ]);
+
+    const resource = {
+      values,
+    };
+
+    // Sobrescrevendo os dados na planilha (ao invés de apenas adicionar)
+    const response = await sheets.spreadsheets.values.update({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range: "Pagina1!A1", // Começando do A1 para substituir tudo
+      valueInputOption: "RAW",
+      resource,
+    });
+
+    console.log(`Dados sobrescritos na planilha: ${response.status}`);
+  } catch (error) {
+    console.error("Erro ao enviar dados para o Google Sheets:", error);
+    throw error;
+  }
+}
+
+// Função para pegar os dados de licitação
 export async function getPncpLicitacoes(data: {
   number: string;
 }): Promise<LicitacaoDataDto[]> {
   const { number } = data;
   const numberPerPage = Number(number) || 1400;
+
   try {
     const response = await axios.get(
       `https://treina.pncp.gov.br/api/search/?tipos_documento=edital&ordenacao=-data&pagina=1&tam_pagina=${numberPerPage}&status=recebendo_proposta`
@@ -115,9 +202,12 @@ export async function getPncpLicitacoes(data: {
       await delay(5000);
     }
 
-    return limitTextLength(dadosLicitacao) as LicitacaoDataDto[];
+    // Enviar os dados para o Google Sheets
+    await sendToGoogleSheets(dadosLicitacao);
+
+    return dadosLicitacao;
   } catch (error) {
-    console.error("Erro ao gerar a planilha:", error);
+    console.error("Erro ao buscar dados da licitação:", error);
     throw error;
   }
 }
